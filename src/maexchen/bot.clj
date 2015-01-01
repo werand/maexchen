@@ -4,6 +4,21 @@
    [clojure.string :as string]))
 
 
+(declare process-message)
+
+
+(defn go-message
+  "Main program loop"
+  [in send-msg]
+  (go
+    (loop []
+      (let [message (<! in)]
+        (when-not (nil? message)
+          (process-message send-msg message)
+          (recur))))
+    (println "go-message ended")))
+
+
 (defn- token [parts]
   (nth parts 2))
 
@@ -34,18 +49,12 @@
   (announce (second parts) (token parts)))
 
 
-(defn go-message
-  [in send-msg]
-  (go
-    (loop []
-      (let [message (<! in)]
-        (when-not (nil? message)
-          (let [parts (string/split message #";")]
+(defn process-message
+  [send-msg message]
+  (let [parts (string/split message #";")]
             (when-let [new-message (condp = (first parts)
                                      "ROUND STARTING"    (round-starting parts)
                                      "YOUR TURN"         (turn parts)
                                      "ROLLED"            (rolled parts)
                                      nil)]
-              (send-msg new-message)))
-          (recur))))
-    (println "go-message ended")))
+              (send-msg new-message))))
