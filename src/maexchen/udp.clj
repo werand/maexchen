@@ -9,9 +9,7 @@
    [java.nio.charset Charset]
    [java.util ArrayList Collection]))
 
-
 (def utf8 (Charset/forName "utf-8"))
-
 
 (defn open-channels
   [context]
@@ -24,7 +22,6 @@
          :input  (chan)
          :output (chan)))
 
-
 (defn close-channels
   [context]
   (do
@@ -34,7 +31,6 @@
       (.close (:channel @context)))
     (swap! context {})))
 
-
 (defn read-message-from-channel
   [channel]
   (let [bytes (ByteBuffer/allocateDirect 1000)
@@ -43,23 +39,25 @@
         decoded (.decode utf8 bytes)]
     (.toString decoded)))
 
-
 (defn go-listen
+  "Reads from udp channel and writes the message to the core.async channel out.
+   Stops reading when the core.async channel is closed."
   [channel out]
   (go
     (let [selector (Selector/open)
           selection-key (.register channel selector (SelectionKey/OP_READ))]
       (loop []
-        (if (< 0 (.select selector 1000))
+        (if (> (.select selector 1000) 0)
           (do
             (-> selector
                 (.selectedKeys)
                 (.remove selection-key))
-            (when (.isReadable selection-key)
-              (when (>! out (read-message-from-channel channel))
-                (recur))))
+            (when
+                (and
+                 (.isReadable selection-key)
+                 (>! out (read-message-from-channel channel)))
+              (recur)))
           (recur))))))
-
 
 (defn send-message
   [host port channel message]
