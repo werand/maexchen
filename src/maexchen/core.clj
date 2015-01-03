@@ -18,12 +18,11 @@
   "Main program loop"
   [bot in send-msg]
   (go
+    (send-msg (register-bot bot))
     (loop []
-      (let [message (<! in)]
-        (when-not (nil? message)
-          (let [response (process-mia-message bot message)]
-            (when-not (nil? response)
-              (send-msg response)))
+      (when-let [message (<! in)]
+        (when-let [response (process-mia-message bot message)]
+          (send-msg response)
           (recur))))))
 
 (defn start-bot
@@ -32,7 +31,6 @@
     (udp/open-channels context)
     (let [{:keys [channel input]} @context
           send-msg (partial udp/send-message host port channel)]
-      (send-msg (register-bot bot))
       (go-process-mia-messages bot input send-msg)
       (udp/go-listen channel input))))
 

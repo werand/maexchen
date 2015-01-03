@@ -1,6 +1,6 @@
-(ns lispcast-clojure-core-async.core-test
+(ns maexchen.core-test
   (:require [clojure.test :refer :all]
-            [lispcast-clojure-core-async.core :refer :all]))
+            [maexchen.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
